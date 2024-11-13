@@ -1,7 +1,7 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 name: charmed-opensearch  # the name of your ROCK
-base: ubuntu:22.04  # the base environment for this ROCK
+base: ubuntu@24.04  # the base environment for this ROCK
 license: Apache-2.0
 
 version: '2.17.0' # just for humans. Semantic versioning is recommended
