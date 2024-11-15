@@ -16,6 +16,8 @@ description: |
 platforms: # The platforms this ROCK should be built on and run on
   amd64:
 
+run_user: _daemon_
+
 services:
   opensearch:
     override: replace
@@ -74,16 +76,18 @@ parts:
   non-root-user:
     plugin: nil
     after: [opensearch-snap]
-    overlay-script: |
-      # Create a user in the $CRAFT_OVERLAY chroot
-      groupadd -R ${CRAFT_OVERLAY} -g 1000 opensearch
-      useradd -R ${CRAFT_OVERLAY} -M -r -g opensearch -u 1000 opensearch
+    # overlay-script: |
+    #   # Please refer to https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
+    #   # for more information about shared user.
+    #   # Create a user in the $CRAFT_OVERLAY chroot
+    #   groupadd -R ${CRAFT_OVERLAY} -g 584792 opensearch
+    #   useradd -R ${CRAFT_OVERLAY} -M -r -g opensearch -u 584792 opensearch
     override-prime: |
       craftctl default
 
       # Give permission ot the required folders
       mkdir -p var/lib/opensearch usr/share/tmp var/log/opensearch
-      chown -R 1000:1000 etc/opensearch opt/opensearch usr/share/opensearch var/lib/opensearch usr/share/tmp var/log/opensearch
+      chown -R 584792:584792 etc/opensearch opt/opensearch usr/share/opensearch var/lib/opensearch usr/share/tmp var/log/opensearch
 
   entry:
     plugin: dump
