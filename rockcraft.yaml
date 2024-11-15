@@ -49,26 +49,23 @@ parts:
     plugin: nil
     stage-snaps:
       - opensearch/2/edge
-    stage-packages:
-      - util-linux
     override-prime: |
       craftctl default
-      
+
       # opensearch
       mkdir -p data
       mkdir -p extensions
-      
+
       # enable security monitoring
       rocks=usr/share/rocks/
       mkdir -p ${rocks}
-      
+
       ## for deb packages
       dpkg-query -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W > ${rocks}/dpkg.query
-      
+
       ## for snap packages
       cp snap.opensearch/manifest.yaml ${rocks}
       cp snap.opensearch/snapcraft.yaml ${rocks}
-      
 
   non-root-user:
     plugin: nil
