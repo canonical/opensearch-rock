@@ -50,9 +50,6 @@ parts:
     stage-snaps:
       - opensearch/2/edge
     stage-packages:
-      - curl
-      - python3
-      - python3-yaml
       - util-linux
     override-prime: |
       craftctl default
@@ -76,12 +73,6 @@ parts:
   non-root-user:
     plugin: nil
     after: [opensearch-snap]
-    # overlay-script: |
-    #   # Please refer to https://discourse.ubuntu.com/t/unifying-user-identity-across-snaps-and-rocks/36469
-    #   # for more information about shared user.
-    #   # Create a user in the $CRAFT_OVERLAY chroot
-    #   groupadd -R ${CRAFT_OVERLAY} -g 584792 opensearch
-    #   useradd -R ${CRAFT_OVERLAY} -M -r -g opensearch -u 584792 opensearch
     override-prime: |
       craftctl default
 
