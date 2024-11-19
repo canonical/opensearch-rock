@@ -92,11 +92,11 @@ jobs:
           # skopeo
           sudo snap install --devmode --channel edge skopeo
           sudo snap install yq
-          
+
       - name: Create local image
         run: |
           version="$(cat rockcraft.yaml | yq .version)"
-          
+
           sudo skopeo \
               --insecure-policy \
               copy \

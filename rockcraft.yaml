@@ -48,7 +48,13 @@ parts:
   opensearch-snap:
     plugin: nil
     stage-snaps:
-      - opensearch/2/edge
+      - opensearch/2/edge/core2404
+    stage-packages:
+      - base-files
+      - python3-venv
+      - python3-yaml
+      - curl
+      - util-linux
     override-prime: |
       craftctl default
 
@@ -81,8 +87,8 @@ parts:
     plugin: dump
     source: scripts
     organize:
-      start.sh: bin/start.sh
-      set_conf.py: bin/set_conf.py
+      start.sh: usr/bin/start.sh
+      set_conf.py: usr/bin/set_conf.py
     stage:
-      - bin/start.sh
-      - bin/set_conf.py
+      - usr/bin/start.sh
+      - usr/bin/set_conf.py
