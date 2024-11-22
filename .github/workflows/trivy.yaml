@@ -36,9 +36,14 @@ jobs:
       - name: Import locally
         run: |
           # Unpack artifact
-          sudo rockcraft.skopeo --insecure-policy copy \
-            docker-archive:charmed_opensearch_rock_amd64 \
-            docker-daemon:trivy/charmed_opensearch_rock_amd64:test
+          version="$(cat rockcraft.yaml | yq .version)"
+          
+          sudo skopeo \
+              --insecure-policy \
+              copy \
+              oci-archive:charmed-opensearch_${version}_amd64.rock \
+              docker-daemon:charmed_opensearch_rock_amd64:test
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
         with:
