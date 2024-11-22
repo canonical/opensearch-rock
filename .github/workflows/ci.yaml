@@ -11,60 +11,9 @@ on:
 
 jobs:
   build:
-    name: Build Rock
-    runs-on: [self-hosted, linux, X64, jammy, large]
-    timeout-minutes: 30
-    outputs:
-      rock-file: ${{ steps.build-snap.outputs.rock }}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Setup LXD
-        uses: canonical/setup-lxd@main
-
-      - name: Install required dependencies
-        run: |
-          # docker
-          sudo snap install docker --channel=latest/stable
-          sudo addgroup --system docker; sudo adduser $USER docker
-          newgrp docker
-          sudo snap disable docker; sudo snap enable docker
-          
-          # skopeo
-          sudo snap install --devmode --channel edge skopeo
-          
-          # rockcraft
-          sudo snap install rockcraft --classic --edge
-          
-          # jq and yq
-          sudo snap install jq yq
-
-      - name: Upgrade linux deps with security updates
-        run: |
-          sudo apt-get update
-          
-          # install security updates
-          sudo apt-get -s dist-upgrade \
-            | grep "^Inst" \
-            | grep -i securi \
-            | awk -F " " {'print $2'} \
-            | xargs sudo apt-get install -y
-          
-          sudo apt-get autoremove -y
-
-      - name: Build rock
-        run: |
-          rockcraft pack --verbose
-
-      - name: Upload built rock job artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: charmed_opensearch_rock_amd64
-          path: "charmed-opensearch_*.rock"
-
+    uses: ./.github/workflows/build.yaml
+    with:
+      branch: ${{ inputs.branch }}
   test:
     name: Test Rock
     runs-on: ubuntu-latest
