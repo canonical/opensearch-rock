@@ -11,9 +11,119 @@ on:
 
 jobs:
   build:
-    uses: ./.github/workflows/build.yaml
-    with:
-      branch: ${{ inputs.branch }}
+    name: Build Rock
+    runs-on: [self-hosted, linux, X64, jammy, large]
+    timeout-minutes: 30
+    outputs:
+      rock-file: ${{ steps.build-snap.outputs.rock }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup LXD
+        uses: canonical/setup-lxd@main
+
+      - name: Install required dependencies
+        run: |
+          # docker
+          sudo snap install docker --channel=latest/stable
+          sudo addgroup --system docker; sudo adduser $USER docker
+          newgrp docker
+          sudo snap disable docker; sudo snap enable docker
+          
+          # skopeo
+          sudo snap install --devmode --channel edge skopeo
+          
+          # rockcraft
+          sudo snap install rockcraft --classic --edge
+          
+          # jq and yq
+          sudo snap install jq yq
+      - name: Upgrade linux deps with security updates
+        run: |
+          sudo apt-get update
+          
+          # install security updates
+          sudo apt-get -s dist-upgrade \
+            | grep "^Inst" \
+            | grep -i securi \
+            | awk -F " " {'print $2'} \
+            | xargs sudo apt-get install -y
+          
+          sudo apt-get autoremove -y
+      - name: Build rock
+        run: |
+          rockcraft pack --verbose
+      - name: Upload built rock job artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: charmed_opensearch_rock_amd64
+          path: "charmed-opensearch_*.rock"
+
+  scan:
+    name: Trivy scan and sbom generation
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+      - name: Download rock file
+        uses: actions/download-artifact@v3
+        with:
+          name: charmed_opensearch_rock_amd64
+          path: .
+
+      - name: Install rockcraft (for skopeo)
+        run: |
+          sudo snap install rockcraft --classic --edge
+
+      - name: Import locally
+        run: |
+          # Unpack artifact
+          version="$(cat rockcraft.yaml | yq .version)"
+          
+          sudo skopeo \
+              --insecure-policy \
+              copy \
+              oci-archive:charmed-opensearch_${version}_amd64.rock \
+              docker-daemon:charmed_opensearch_rock_amd64:test
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'trivy/charmed_opensearch_rock_amd64:test'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'MEDIUM,HIGH,CRITICAL'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          ref: ${{ inputs.branch }}
+
+      - name: Run Trivy in GitHub SBOM mode and submit results to Dependency Graph
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'image'
+          format: 'spdx-json'
+          output: 'dependency-results.sbom.json'
+          image-ref: 'trivy/charmed_opensearch_rock_amd64:test'
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
+          severity: "MEDIUM,HIGH,CRITICAL"
+          scanners: "vuln"
+      
+      - name: Upload trivy report as a Github artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-sbom-report
+          path: '${{ github.workspace }}/dependency-results.sbom.json'
+          retention-days: 90  
   test:
     name: Test Rock
     runs-on: ubuntu-latest
