@@ -61,7 +61,7 @@ jobs:
           # docker
           # FIXME: v27.2.0 reports "...client version 1.22 is too old..." when trying to copy the
           # rock to the local repository --revision=2932
-          sudo snap install docker --channel=latest/stable
+          sudo snap install docker --channel=latest/stable --revision=2932
           sudo addgroup --system docker; sudo adduser $USER docker
           newgrp docker
           sudo snap disable docker; sudo snap enable docker
