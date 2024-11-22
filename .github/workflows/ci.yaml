@@ -77,13 +77,19 @@ jobs:
           name: charmed_opensearch_rock_amd64
           path: .
 
-      - name: Install rockcraft (for skopeo)
+      - name: Install required dependencies
         run: |
-          sudo snap install rockcraft --classic --edge
-
-      - name: Import locally
+          # docker
+          sudo snap install docker --channel=latest/stable
+          sudo addgroup --system docker; sudo adduser $USER docker
+          newgrp docker
+          sudo snap disable docker; sudo snap enable docker
+          # skopeo
+          sudo snap install --devmode --channel edge skopeo
+          sudo snap install yq
+          
+      - name: Create local image
         run: |
-          # Unpack artifact
           version="$(cat rockcraft.yaml | yq .version)"
           
           sudo skopeo \
@@ -123,7 +129,8 @@ jobs:
         with:
           name: trivy-sbom-report
           path: '${{ github.workspace }}/dependency-results.sbom.json'
-          retention-days: 90  
+          retention-days: 90
+
   test:
     name: Test Rock
     runs-on: ubuntu-latest
