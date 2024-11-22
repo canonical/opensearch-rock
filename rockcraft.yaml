@@ -1,7 +1,7 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 name: charmed-opensearch  # the name of your ROCK
-base: ubuntu:22.04  # the base environment for this ROCK
+base: ubuntu@24.04  # the base environment for this ROCK
 license: Apache-2.0
 
 version: '2.17.0' # just for humans. Semantic versioning is recommended
@@ -15,6 +15,8 @@ description: |
 
 platforms: # The platforms this ROCK should be built on and run on
   amd64:
+
+run_user: _daemon_
 
 services:
   opensearch:
@@ -48,49 +50,45 @@ parts:
     stage-snaps:
       - opensearch/2/edge
     stage-packages:
-      - curl
-      - python3
+      - base-files
+      - python3-venv
       - python3-yaml
+      - curl
       - util-linux
     override-prime: |
       craftctl default
-      
+
       # opensearch
       mkdir -p data
       mkdir -p extensions
-      
+
       # enable security monitoring
       rocks=usr/share/rocks/
       mkdir -p ${rocks}
-      
+
       ## for deb packages
       dpkg-query -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W > ${rocks}/dpkg.query
-      
+
       ## for snap packages
       cp snap.opensearch/manifest.yaml ${rocks}
       cp snap.opensearch/snapcraft.yaml ${rocks}
-      
 
   non-root-user:
     plugin: nil
     after: [opensearch-snap]
-    overlay-script: |
-      # Create a user in the $CRAFT_OVERLAY chroot
-      groupadd -R ${CRAFT_OVERLAY} -g 1000 opensearch
-      useradd -R ${CRAFT_OVERLAY} -M -r -g opensearch -u 1000 opensearch
     override-prime: |
       craftctl default
 
       # Give permission ot the required folders
       mkdir -p var/lib/opensearch usr/share/tmp var/log/opensearch
-      chown -R 1000:1000 etc/opensearch opt/opensearch usr/share/opensearch var/lib/opensearch usr/share/tmp var/log/opensearch
+      chown -R 584792:584792 etc/opensearch opt/opensearch usr/share/opensearch var/lib/opensearch usr/share/tmp var/log/opensearch
 
   entry:
     plugin: dump
     source: scripts
     organize:
-      start.sh: bin/start.sh
-      set_conf.py: bin/set_conf.py
+      start.sh: usr/bin/start.sh
+      set_conf.py: usr/bin/set_conf.py
     stage:
-      - bin/start.sh
-      - bin/set_conf.py
+      - usr/bin/start.sh
+      - usr/bin/set_conf.py

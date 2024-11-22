@@ -27,33 +27,8 @@ jobs:
 
       - name: Install required dependencies
         run: |
-          # docker
-          sudo snap install docker --channel=latest/stable
-          sudo addgroup --system docker; sudo adduser $USER docker
-          newgrp docker
-          sudo snap disable docker; sudo snap enable docker
-          
-          # skopeo
-          sudo snap install --devmode --channel edge skopeo
-          
           # rockcraft
           sudo snap install rockcraft --classic --edge
-          
-          # jq and yq
-          sudo snap install jq yq
-
-      - name: Upgrade linux deps with security updates
-        run: |
-          sudo apt-get update
-          
-          # install security updates
-          sudo apt-get -s dist-upgrade \
-            | grep "^Inst" \
-            | grep -i securi \
-            | awk -F " " {'print $2'} \
-            | xargs sudo apt-get install -y
-          
-          sudo apt-get autoremove -y
 
       - name: Build rock
         run: |
@@ -84,7 +59,9 @@ jobs:
       - name: Install required dependencies
         run: |
           # docker
-          sudo snap install docker --channel=latest/stable
+          # FIXME: v27.2.0 reports "...client version 1.22 is too old..." when trying to copy the
+          # rock to the local repository --revision=2932
+          sudo snap install docker --channel=latest/stable --revision=2932
           sudo addgroup --system docker; sudo adduser $USER docker
           newgrp docker
           sudo snap disable docker; sudo snap enable docker
@@ -92,11 +69,11 @@ jobs:
           # skopeo
           sudo snap install --devmode --channel edge skopeo
           sudo snap install yq
-          
+
       - name: Create local image
         run: |
           version="$(cat rockcraft.yaml | yq .version)"
-          
+
           sudo skopeo \
               --insecure-policy \
               copy \

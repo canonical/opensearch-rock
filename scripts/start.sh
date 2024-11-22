@@ -88,8 +88,4 @@ sed -i "s@=logs/@=${OPENSEARCH_VARLOG}/@" "${OPENSEARCH_PATH_CONF}/jvm.options"
 
 cat "${conf}"
 
-exec /usr/bin/setpriv \
-  --clear-groups \
-  --reuid opensearch \
-  --regid opensearch \
-  -- "${OPENSEARCH_BIN}"/opensearch
+exec "${OPENSEARCH_BIN}"/opensearch
