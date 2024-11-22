@@ -59,20 +59,22 @@ jobs:
       - name: Install required dependencies
         run: |
           # docker
-          sudo snap install docker --channel=latest/stable
+          # FIXME: v27.2.0 reports "...client version 1.22 is too old..." when trying to copy the
+          # rock to the local repository
+          sudo snap install docker --channel=latest/stable --revision=2932
           sudo addgroup --system docker; sudo adduser $USER docker
           newgrp docker
           sudo snap disable docker; sudo snap enable docker
 
-          # rockcraft
-          sudo snap install rockcraft --classic --edge
+          # skopeo
+          sudo snap install --devmode --channel edge skopeo
           sudo snap install yq
 
       - name: Create local image
         run: |
           version="$(cat rockcraft.yaml | yq .version)"
 
-          sudo rockcraft.skopeo \
+          sudo skopeo \
               --insecure-policy \
               copy \
               oci-archive:charmed-opensearch_${version}_amd64.rock \
