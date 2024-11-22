@@ -27,33 +27,8 @@ jobs:
 
       - name: Install required dependencies
         run: |
-          # docker
-          sudo snap install docker --channel=latest/stable
-          sudo addgroup --system docker; sudo adduser $USER docker
-          newgrp docker
-          sudo snap disable docker; sudo snap enable docker
-          
-          # skopeo
-          sudo snap install --devmode --channel edge skopeo
-          
           # rockcraft
           sudo snap install rockcraft --classic --edge
-          
-          # jq and yq
-          sudo snap install jq yq
-
-      - name: Upgrade linux deps with security updates
-        run: |
-          sudo apt-get update
-          
-          # install security updates
-          sudo apt-get -s dist-upgrade \
-            | grep "^Inst" \
-            | grep -i securi \
-            | awk -F " " {'print $2'} \
-            | xargs sudo apt-get install -y
-          
-          sudo apt-get autoremove -y
 
       - name: Build rock
         run: |
@@ -89,15 +64,15 @@ jobs:
           newgrp docker
           sudo snap disable docker; sudo snap enable docker
 
-          # skopeo
-          sudo snap install --devmode --channel edge skopeo
+          # rockcraft
+          sudo snap install rockcraft --classic --edge
           sudo snap install yq
 
       - name: Create local image
         run: |
           version="$(cat rockcraft.yaml | yq .version)"
 
-          sudo skopeo \
+          sudo rockcraft.skopeo \
               --insecure-policy \
               copy \
               oci-archive:charmed-opensearch_${version}_amd64.rock \
