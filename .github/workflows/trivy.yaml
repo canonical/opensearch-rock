@@ -32,11 +32,6 @@ jobs:
       - name: Install rockcraft (for skopeo)
         run: |
           sudo snap install rockcraft --classic --edge
-      - name: Get Artifact Name
-        id: artifact
-        run: |
-          BASE_ARTIFACT=$(make help | grep 'Artifact: ')
-          echo "base_artifact_name=${BASE_ARTIFACT#'Artifact: '}" >> $GITHUB_OUTPUT
 
       - name: Import locally
         run: |
