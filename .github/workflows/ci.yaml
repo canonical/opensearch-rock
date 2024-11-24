@@ -41,7 +41,7 @@ jobs:
 
   scan:
     name: Trivy scan and sbom generation
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 120
     needs:
       - build
