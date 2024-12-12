@@ -119,7 +119,7 @@ curl -X GET http://127.0.1.1:9200/_nodes/
 ```
 And expect to see 3 nodes.
 
-**NOTE:** This deployment IS NOT suitable for production AS IS. As this deployment disables and does NOT configure the security of OpenSearch. Please use it as part of the Juju OpenSearch K8s charm once ready.
+**NOTE:** This deployment IS NOT suitable for production AS IS. As this deployment does not automate the security setup of OpenSearch. Please, set it manually or use the image as part of the Juju OpenSearch K8s charm once ready.
 
 ## License
 The Charmed OpenSearch rock is free software, distributed under the Apache
