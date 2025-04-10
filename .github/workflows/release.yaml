@@ -57,7 +57,7 @@ jobs:
           version="$(cat rockcraft.yaml | yq .version)"
           
           base="$(cat rockcraft.yaml | yq .base)"
-          base="${base#*:}"
+          base="${base#*@}"
           
           # push major version to edge
           major_tag_version="${version%%.*}-${{ env.RELEASE }}"
