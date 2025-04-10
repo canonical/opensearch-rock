@@ -6,7 +6,7 @@ env:
 on:
   push:
     branches:
-      - test-release-fix-docker-version
+      - 2/edge
 
 jobs:
   ci-tests:
