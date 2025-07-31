@@ -85,6 +85,7 @@ set_yaml_prop "${conf}" "path.data" "${OPENSEARCH_VARLIB}/data"
 set_yaml_prop "${conf}" "path.logs" "${OPENSEARCH_VARLOG}/logs"
 set_yaml_prop "${conf}" "plugins.security.disabled" "true"
 sed -i "s@=logs/@=${OPENSEARCH_VARLOG}/@" "${OPENSEARCH_PATH_CONF}/jvm.options"
+sed -i "s@-javaagent:@-javaagent:/@" "${OPENSEARCH_PATH_CONF}/jvm.options"
 
 cat "${conf}"
 
