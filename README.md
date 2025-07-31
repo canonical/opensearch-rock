@@ -17,10 +17,6 @@ For more information on rocks, visit the [rockcraft Github](https://github.com/c
 ## Version
 The OpenSearch rock release aligns with the [OpenSearch upstream major version](https://opensearch.org/docs/latest/version-history/) naming. OpenSearch releases major versions such as 1.0, 2.0, and so on.
 
-## Release
-Charmed OpenSearch [Rock Release Notes](https://discourse.charmhub.io/t/release-notes-charmed-opensearch-2-rock/10278).
-
-
 ## Rock Usage
 ### Building the Rock
 The steps outlined below are based on the assumption that you are building the rock with the latest LTS of Ubuntu.  
