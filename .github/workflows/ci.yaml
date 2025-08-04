@@ -231,7 +231,7 @@ jobs:
         env:
           OPENSEARCH_BIN: /usr/share/opensearch/bin
         run: |
-          # expected plugins appear in plugins listing
+          # non-core plugins don't appear in plugins listing
           check_plugin_absent() {
             local plugin=$1
             if docker exec cm0 bash -c "${OPENSEARCH_BIN}/opensearch-plugin list | grep $plugin"; then
