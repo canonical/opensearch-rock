@@ -226,3 +226,24 @@ jobs:
           if [ "${all_nodes}" != "cm0,cm1,data1" ]; then
               exit 1
           fi
+
+      - name: Ensure expected plugins are available
+        env:
+          OPENSEARCH_BIN: /usr/share/opensearch/bin
+        run: |
+          # expected plugins appear in plugins listing
+          check_plugin_exists() {
+            local plugin=$1
+            docker exec cm0 bash -c "${OPENSEARCH_BIN}/opensearch-plugin list | grep $plugin" || exit 1
+          }
+
+          check_plugin_exists "prometheus-exporter"
+          check_plugin_exists "repository-s3"
+          check_plugin_exists "repository-gcs"
+          check_plugin_exists "repository-azure"
+
+          # Prometheus exporter can be queried
+          resp=$(curl -I -XGET http://localhost:9200/_prometheus/metrics)
+          if [[ "$resp" != *"200 OK"* ]]; then
+            exit 1
+          fi

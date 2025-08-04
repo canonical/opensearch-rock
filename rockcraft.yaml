@@ -18,31 +18,31 @@ platforms: # The platforms this ROCK should be built on and run on
 
 run_user: _daemon_
 
+environment:
+  OPENSEARCH_HOME: /usr/share/opensearch
+
+  JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
+  OPENSEARCH_JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
+  OPENSEARCH_BIN: /usr/share/opensearch/bin
+  OPENSEARCH_LIB: /usr/share/opensearch/lib
+  OPENSEARCH_PLUGINS: /usr/share/opensearch/plugins
+  OPENSEARCH_MODULES: /usr/share/opensearch/modules
+
+  OPENSEARCH_PATH_CONF: /etc/opensearch
+  OPENSEARCH_PATH_CERTS: /etc/opensearch/certificates
+
+  OPENSEARCH_VARLIB: /var/lib/opensearch
+  OPENSEARCH_TMPDIR: /usr/share/tmp
+  OPENSEARCH_VARLOG: /var/log/opensearch
+
+  KNN_LIB_DIR: /usr/share/opensearch/plugins/opensearch-knn/lib
+
 services:
   opensearch:
     override: replace
     startup: enabled
     summary: Start OpenSearch
     command: '/bin/bash /bin/start.sh'
-    environment:
-      OPS_ROOT: /opt/opensearch
-      OPENSEARCH_HOME: /usr/share/opensearch
-
-      JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
-      OPENSEARCH_JAVA_HOME: /usr/lib/jvm/java-21-openjdk-amd64
-      OPENSEARCH_BIN: /usr/share/opensearch/bin
-      OPENSEARCH_LIB: /usr/share/opensearch/lib
-      OPENSEARCH_PLUGINS: /usr/share/opensearch/plugins
-      OPENSEARCH_MODULES: /usr/share/opensearch/modules
-
-      OPENSEARCH_PATH_CONF: /etc/opensearch
-      OPENSEARCH_PATH_CERTS: /etc/opensearch/certificates
-
-      OPENSEARCH_VARLIB: /var/lib/opensearch
-      OPENSEARCH_TMPDIR: /usr/share/tmp
-      OPENSEARCH_VARLOG: /var/log/opensearch
-
-      KNN_LIB_DIR: /usr/share/opensearch/plugins/opensearch-knn/lib
 
 parts:
   opensearch-snap:
@@ -65,6 +65,10 @@ parts:
       # enable security monitoring
       rocks=usr/share/rocks/
       mkdir -p ${rocks}
+
+      # move original plugin and keystore binary
+      mv "${CRAFT_PRIME}/usr/share/opensearch/bin/opensearch-plugin.orig" "${CRAFT_PRIME}/usr/share/opensearch/bin/opensearch-plugin"
+      mv "${CRAFT_PRIME}/usr/share/opensearch/bin/opensearch-keystore.orig" "${CRAFT_PRIME}/usr/share/opensearch/bin/opensearch-keystore"
 
       ## for deb packages
       dpkg-query -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W > ${rocks}/dpkg.query
