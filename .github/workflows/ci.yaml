@@ -227,23 +227,19 @@ jobs:
               exit 1
           fi
 
-      - name: Ensure expected plugins are available
+      - name: Ensure non-core plugins are not listed
         env:
           OPENSEARCH_BIN: /usr/share/opensearch/bin
         run: |
           # expected plugins appear in plugins listing
-          check_plugin_exists() {
+          check_plugin_absent() {
             local plugin=$1
-            docker exec cm0 bash -c "${OPENSEARCH_BIN}/opensearch-plugin list | grep $plugin" || exit 1
+            if docker exec cm0 bash -c "${OPENSEARCH_BIN}/opensearch-plugin list | grep $plugin"; then
+              exit 1
+            fi
           }
 
-          check_plugin_exists "prometheus-exporter"
-          check_plugin_exists "repository-s3"
-          check_plugin_exists "repository-gcs"
-          check_plugin_exists "repository-azure"
-
-          # Prometheus exporter can be queried
-          resp=$(curl -I -XGET http://localhost:9200/_prometheus/metrics)
-          if [[ "$resp" != *"200 OK"* ]]; then
-            exit 1
-          fi
+          check_plugin_absent "prometheus-exporter"
+          check_plugin_absent "repository-s3"
+          check_plugin_absent "repository-gcs"
+          check_plugin_absent "repository-azure"
