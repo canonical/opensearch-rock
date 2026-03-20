@@ -66,11 +66,11 @@ jobs:
           # skopeo
           sudo snap install --devmode --channel edge skopeo
           sudo snap install yq
-          
+
       - name: Create local image
         run: |
           version="$(cat rockcraft.yaml | yq .version)"
-          
+
           sudo skopeo \
               --insecure-policy \
               copy \
@@ -78,35 +78,35 @@ jobs:
               docker-daemon:trivy/opensearch_rock_amd64:test
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.30.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
-          image-ref: 'trivy/opensearch_rock_amd64:test'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'MEDIUM,HIGH,CRITICAL'
+          image-ref: "trivy/opensearch_rock_amd64:test"
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "MEDIUM,HIGH,CRITICAL"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
 
       - name: Run Trivy in GitHub SBOM mode and submit results to Dependency Graph
-        uses: aquasecurity/trivy-action@0.30.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
-          scan-type: 'image'
-          format: 'spdx-json'
-          output: 'dependency-results.sbom.json'
-          image-ref: 'trivy/opensearch_rock_amd64:test'
+          scan-type: "image"
+          format: "spdx-json"
+          output: "dependency-results.sbom.json"
+          image-ref: "trivy/opensearch_rock_amd64:test"
           github-pat: ${{ secrets.GITHUB_TOKEN }}
           severity: "MEDIUM,HIGH,CRITICAL"
           scanners: "vuln"
-      
+
       - name: Upload trivy report as a Github artifact
         uses: actions/upload-artifact@v4
         with:
           name: trivy-sbom-report
-          path: '${{ github.workspace }}/dependency-results.sbom.json'
+          path: "${{ github.workspace }}/dependency-results.sbom.json"
           retention-days: 90
 
   test:
@@ -158,7 +158,7 @@ jobs:
       - name: Start OpenSearch
         run: |
           version="$(cat rockcraft.yaml | yq .version)"
-          
+
           # create first cm_node container
           container_0_id=$(docker run \
               -d --rm -it \
@@ -168,10 +168,10 @@ jobs:
               --name cm0 \
               opensearch:"${version}")
           container_0_ip=$(docker inspect -f '{{ .NetworkSettings.IPAddress }}' "${container_0_id}")
-          
+
           # wait a bit for it to fully initialize
           sleep 30s
-          
+
           # create data/voting_only node container
           container_1_id=$(docker run \
               -d --rm -it \
@@ -182,7 +182,7 @@ jobs:
               --name data1 \
               opensearch:"${version}")
           container_1_ip=$(docker inspect -f '{{ .NetworkSettings.IPAddress }}' "${container_1_id}")
-          
+
           # wait a bit for it to fully initialize
           sleep 30s
 
@@ -196,7 +196,7 @@ jobs:
               --name cm1 \
               opensearch:"${version}")
           container_2_ip=$(docker inspect -f '{{ .NetworkSettings.IPAddress }}' "${container_2_id}")
-          
+
           # wait a bit for it to fully initialize
           sleep 30s
 
@@ -215,7 +215,7 @@ jobs:
           if [ "${successful_nodes}" != 3 ]; then
               exit 1
           fi
-          
+
           all_nodes="$(curl -sk -XGET http://127.0.0.1:9200/_nodes/ | \
             jq '.nodes | values[] | .name' | \
             jq -s '. |= if . then sort else empty end' | \
