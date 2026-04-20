@@ -27,7 +27,6 @@ jobs:
       - name: Install required dependencies
         run: |
           # docker
-          sudo snap install docker --channel=latest/stable --revision=2932
           sudo snap install docker
           sudo addgroup --system docker
           sudo adduser $USER docker
