@@ -164,7 +164,7 @@ jobs:
               -p 9200:9200 \
               --name cm0 \
               opensearch:"${version}")
-          container_0_ip=$(docker inspect -f '{{ .NetworkSettings.IPAddress }}' "${container_0_id}")
+          container_0_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${container_0_id}")
 
           # wait a bit for it to fully initialize
           sleep 30s
@@ -178,7 +178,7 @@ jobs:
               -p 9201:9200 \
               --name data1 \
               opensearch:"${version}")
-          container_1_ip=$(docker inspect -f '{{ .NetworkSettings.IPAddress }}' "${container_1_id}")
+          container_1_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${container_1_id}")
 
           # wait a bit for it to fully initialize
           sleep 30s
@@ -192,7 +192,7 @@ jobs:
               -p 9202:9200 \
               --name cm1 \
               opensearch:"${version}")
-          container_2_ip=$(docker inspect -f '{{ .NetworkSettings.IPAddress }}' "${container_2_id}")
+          container_2_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${container_2_id}")
 
           # wait a bit for it to fully initialize
           sleep 30s
