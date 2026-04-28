@@ -28,6 +28,7 @@ jobs:
         run: |
           # docker
           sudo snap install docker
+          sudo snap install rockcraft --classic --edge
           sudo addgroup --system docker
           sudo adduser $USER docker
           newgrp docker
