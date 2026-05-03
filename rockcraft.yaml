@@ -4,16 +4,17 @@ name: opensearch # the name of your ROCK
 base: ubuntu@24.04 # the base environment for this ROCK
 license: Apache-2.0
 
-version: '2.19.4' # just for humans. Semantic versioning is recommended
+version: "2.19.4" # just for humans. Semantic versioning is recommended
 
-summary: 'OpenSearch ROCK OCI.'
+summary: "OpenSearch ROCK OCI."
 description: |
   OpenSearch is a community-driven, Apache 2.0-licensed open source search and 
   analytics suite that makes it easy to ingest, search, visualize, and analyze data. 
   Developers build with OpenSearch for use cases such as application search, 
   log analytics, data observability, data ingestion, and more.
 
-platforms: # The platforms this ROCK should be built on and run on
+platforms:
+  # The platforms this ROCK should be built on and run on
   amd64:
 
 run_user: _daemon_
@@ -42,7 +43,7 @@ services:
     override: replace
     startup: enabled
     summary: Start OpenSearch
-    command: '/bin/bash /bin/start.sh'
+    command: "/bin/bash /bin/start.sh"
 
 parts:
   opensearch-snap:
@@ -79,7 +80,7 @@ parts:
 
   non-root-user:
     plugin: nil
-    after: [opensearch-snap]
+    after: [ opensearch-snap ]
     override-prime: |
       craftctl default
 
@@ -141,13 +142,12 @@ parts:
 
       if [ -f "${jvm_opts}" ]; then
           grep -q "javax.net.ssl.trustStore=.*cacerts.p12" "${jvm_opts}" \
-              || echo "-Djavax.net.ssl.trustStore=${dest}" >> "${jvm_opts}"
+              || echo "-Djavax.net.ssl.trustStore=/${dest}" >> "${jvm_opts}"
           grep -q "javax.net.ssl.trustStorePassword=changeit" "${jvm_opts}" \
               || echo "-Djavax.net.ssl.trustStorePassword=changeit" >> "${jvm_opts}"
       fi
       # Set ownership for the configuration directory
-      chown -R 584792:584792 etc/opensearch/
-
+      chown -R 584792:584792 /etc/opensearch/
 
   entry:
     plugin: dump
