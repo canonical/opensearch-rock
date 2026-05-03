@@ -92,8 +92,8 @@ parts:
       fi
 
       # Give permission at the required folders
-      mkdir -p var/lib/opensearch usr/share/tmp var/log/opensearch
-      mkdir -p etc/opensearch/certificates
+      mkdir -p /var/lib/opensearch /usr/share/tmp /var/log/opensearch
+      mkdir -p /etc/opensearch/certificates
       install -d -o 584792 -g 584792 -m 770 \
           etc/opensearch \
           opt/opensearch \
@@ -104,20 +104,20 @@ parts:
           etc/opensearch/certificates
 
       # Ensure certificates directory exists with correct permissions
-      dest="etc/opensearch/certificates/cacerts.p12"
-      jvm_opts="etc/opensearch/jvm.options"
+      dest="/etc/opensearch/certificates/cacerts.p12"
+      jvm_opts="/etc/opensearch/jvm.options"
 
-      if [ ! -f "etc/opensearch/certificates/cacerts.p12" ]; then
+      if [ ! -f "/etc/opensearch/certificates/cacerts.p12" ]; then
           src=""
-          if [ -f "etc/ssl/certs/java/cacerts" ]; then
-              src="etc/ssl/certs/java/cacerts"
-          elif [ -f "usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts" ]; then
-              src="usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts"
+          if [ -f "/etc/ssl/certs/java/cacerts" ]; then
+              src="/etc/ssl/certs/java/cacerts"
+          elif [ -f "/usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts" ]; then
+              src="/usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts"
           fi
 
           keytool=""
-          if [ -x "usr/lib/jvm/java-21-openjdk-amd64/bin/keytool" ]; then
-              keytool="usr/lib/jvm/java-21-openjdk-amd64/bin/keytool"
+          if [ -x "/usr/lib/jvm/java-21-openjdk-amd64/bin/keytool" ]; then
+              keytool="/usr/lib/jvm/java-21-openjdk-amd64/bin/keytool"
           elif command -v keytool >/dev/null 2>&1; then
               keytool="$(command -v keytool)"
           fi
@@ -142,7 +142,7 @@ parts:
 
       if [ -f "${jvm_opts}" ]; then
           grep -q "javax.net.ssl.trustStore=.*cacerts.p12" "${jvm_opts}" \
-              || echo "-Djavax.net.ssl.trustStore=/${dest}" >> "${jvm_opts}"
+              || echo "-Djavax.net.ssl.trustStore=${dest}" >> "${jvm_opts}"
           grep -q "javax.net.ssl.trustStorePassword=changeit" "${jvm_opts}" \
               || echo "-Djavax.net.ssl.trustStorePassword=changeit" >> "${jvm_opts}"
       fi
