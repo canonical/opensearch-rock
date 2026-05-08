@@ -8,6 +8,7 @@ on:
     branches:
       - 3-24.04
   workflow_call:
+  workflow_dispatch:
 
 jobs:
   ci-tests:
