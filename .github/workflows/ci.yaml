@@ -56,34 +56,32 @@ jobs:
 
       - name: Install required dependencies
         run: |
-          # docker
-          # FIXME: v27.2.0 reports "...client version 1.22 is too old..." when trying to copy the
-          # rock to the local repository --revision=2932
-          sudo snap install docker --channel=latest/stable --revision=2932
-          sudo addgroup --system docker; sudo adduser $USER docker
+          sudo snap install rockcraft --classic --edge
+          sudo snap install docker
+          sudo addgroup --system docker
+          sudo adduser $USER docker
           newgrp docker
-          sudo snap disable docker; sudo snap enable docker
-          # skopeo
-          sudo snap install --devmode --channel edge skopeo
+
           sudo snap install yq
 
       - name: Create local image
         run: |
           version="$(cat rockcraft.yaml | yq .version)"
 
-          sudo skopeo \
+          rockcraft.skopeo \
               --insecure-policy \
               copy \
               oci-archive:opensearch_${version}_amd64.rock \
               docker-daemon:trivy/opensearch_rock_amd64:test
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: "trivy/opensearch_rock_amd64:test"
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "MEDIUM,HIGH,CRITICAL"
+          version: "v0.70.0"
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
@@ -92,7 +90,7 @@ jobs:
           sarif_file: "trivy-results.sarif"
 
       - name: Run Trivy in GitHub SBOM mode and submit results to Dependency Graph
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           scan-type: "image"
           format: "spdx-json"
@@ -101,6 +99,7 @@ jobs:
           github-pat: ${{ secrets.GITHUB_TOKEN }}
           severity: "MEDIUM,HIGH,CRITICAL"
           scanners: "vuln"
+          version: "v0.70.0"
 
       - name: Upload trivy report as a Github artifact
         uses: actions/upload-artifact@v4
@@ -127,23 +126,19 @@ jobs:
 
       - name: Install required dependencies
         run: |
-          # docker
-          # FIXME: v27.2.0 reports "...client version 1.22 is too old..." when trying to copy the
-          # rock to the local repository --revision=2932
-          sudo snap install docker --channel=latest/stable --revision=2932
-          sudo addgroup --system docker; sudo adduser $USER docker
+          sudo snap install rockcraft --classic --edge
+          sudo snap install docker
+          sudo addgroup --system docker
+          sudo adduser $USER docker
           newgrp docker
-          sudo snap disable docker; sudo snap enable docker
 
-          # skopeo
-          sudo snap install --devmode --channel edge skopeo
           sudo snap install yq
 
       - name: Create local image
         run: |
           version="$(cat rockcraft.yaml | yq .version)"
 
-          sudo skopeo \
+          rockcraft.skopeo \
               --insecure-policy \
               copy \
               oci-archive:opensearch_${version}_amd64.rock \
@@ -167,7 +162,7 @@ jobs:
               -p 9200:9200 \
               --name cm0 \
               opensearch:"${version}")
-          container_0_ip=$(docker inspect -f '{{ .NetworkSettings.IPAddress }}' "${container_0_id}")
+          container_0_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${container_0_id}")
 
           # wait a bit for it to fully initialize
           sleep 30s
@@ -181,7 +176,7 @@ jobs:
               -p 9201:9200 \
               --name data1 \
               opensearch:"${version}")
-          container_1_ip=$(docker inspect -f '{{ .NetworkSettings.IPAddress }}' "${container_1_id}")
+          container_1_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${container_1_id}")
 
           # wait a bit for it to fully initialize
           sleep 30s
@@ -195,7 +190,7 @@ jobs:
               -p 9202:9200 \
               --name cm1 \
               opensearch:"${version}")
-          container_2_ip=$(docker inspect -f '{{ .NetworkSettings.IPAddress }}' "${container_2_id}")
+          container_2_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${container_2_id}")
 
           # wait a bit for it to fully initialize
           sleep 30s
