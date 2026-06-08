@@ -87,7 +87,7 @@ parts:
 
   non-root-user:
     plugin: nil
-    after: [ opensearch-snap ]
+    after: [opensearch-snap]
     override-prime: |
       craftctl default
 
@@ -102,13 +102,13 @@ parts:
       mkdir -p /var/lib/opensearch /usr/share/tmp /var/log/opensearch
       mkdir -p /etc/opensearch/certificates
       install -d -o 584792 -g 584792 -m 770 \
-          etc/opensearch \
-          opt/opensearch \
-          usr/share/opensearch \
-          var/lib/opensearch \
-          usr/share/tmp \
-          var/log/opensearch \
-          etc/opensearch/certificates
+          "${CRAFT_PRIME}/etc/opensearch" \
+          "${CRAFT_PRIME}/opt/opensearch" \
+          "${CRAFT_PRIME}/usr/share/opensearch" \
+          "${CRAFT_PRIME}/var/lib/opensearch" \
+          "${CRAFT_PRIME}/usr/share/tmp" \
+          "${CRAFT_PRIME}/var/log/opensearch" \
+          "${CRAFT_PRIME}/etc/opensearch/certificates"
 
       # Ensure certificates directory exists with correct permissions
       container_conf_dir="/etc/opensearch"
@@ -171,6 +171,7 @@ parts:
       fi
 
       if [ -f "${jvm_opts}" ]; then
+          # ${dest} is the container-side path, this is what the JVM sees at runtime
           grep -q "javax.net.ssl.trustStore=.*cacerts.p12" "${jvm_opts}" \
               || echo "-Djavax.net.ssl.trustStore=${dest}" >> "${jvm_opts}"
           grep -q "javax.net.ssl.trustStorePassword=changeit" "${jvm_opts}" \
