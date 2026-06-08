@@ -68,20 +68,6 @@ function seed_hosts() {
     echo "[ ${formatted_hosts} ]"
 }
 
-if [ -d "${OPENSEARCH_PLUGINS}/opensearch-knn" ]; then
-    if [ ! -d "${KNN_LIB_DIR}" ]; then
-        echo "Missing OpenSearch k-NN native library directory: ${KNN_LIB_DIR}" >&2
-        exit 1
-    fi
-
-    if [ ! -f "${KNN_LIB_DIR}/libopensearchknn_faiss_avx2.so" ]; then
-        echo "Missing OpenSearch k-NN native library: ${KNN_LIB_DIR}/libopensearchknn_faiss_avx2.so" >&2
-        exit 1
-    fi
-
-    existing_ld_library_path="${LD_LIBRARY_PATH:-}"
-    export LD_LIBRARY_PATH="${KNN_LIB_DIR}${existing_ld_library_path:+:${existing_ld_library_path}}"
-fi
 
 conf="${OPENSEARCH_PATH_CONF}/opensearch.yml"
 
