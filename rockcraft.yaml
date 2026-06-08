@@ -111,76 +111,76 @@ parts:
           "${CRAFT_PRIME}/etc/opensearch/certificates"
 
       # Ensure certificates directory exists with correct permissions
-      container_conf_dir="/etc/opensearch"
-      prime_conf_dir="${CRAFT_PRIME}${container_conf_dir}"
-      container_certs_dir="${container_conf_dir}/certificates"
-      prime_certs_dir="${prime_conf_dir}/certificates"
-      dest="${container_certs_dir}/cacerts.p12"
-      prime_dest="${prime_certs_dir}/cacerts.p12"
-      jvm_opts="${prime_conf_dir}/jvm.options"
-      knn_lib_dir="/usr/share/opensearch/plugins/opensearch-knn/lib"
-      prime_knn_lib_dir="${CRAFT_PRIME}${knn_lib_dir}"
-      java_library_path="${knn_lib_dir}:/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib"
+      CONTAINER_CONF_DIR="/etc/opensearch"
+      PRIME_CONF_DIR="${CRAFT_PRIME}${CONTAINER_CONF_DIR}"
+      CONTAINER_CERTS_DIR="${CONTAINER_CONF_DIR}/certificates"
+      PRIME_CERTS_DIR="${PRIME_CONF_DIR}/certificates"
+      CONTAINER_CERT_DEST="${CONTAINER_CERTS_DIR}/cacerts.p12"
+      PRIME_DEST="${PRIME_CERTS_DIR}/cacerts.p12"
+      JVM_OPTS="${PRIME_CONF_DIR}/jvm.options"
+      KNN_LIB_DIR="/usr/share/opensearch/plugins/opensearch-knn/lib"
+      PRIME_KNN_LIB_DIR="${CRAFT_PRIME}${KNN_LIB_DIR}"
+      JAVA_LIBRARY_PATH="${KNN_LIB_DIR}:/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib"
 
-      if [ -d "${prime_knn_lib_dir}" ]; then
-          chown -R 584792:584792 "${prime_knn_lib_dir}"
-          find "${prime_knn_lib_dir}" -type d -exec chmod 755 {} \;
-          find "${prime_knn_lib_dir}" -type f -name '*.so*' -exec chmod 755 {} \;
+      if [ -d "${PRIME_KNN_LIB_DIR}" ]; then
+          chown -R 584792:584792 "${PRIME_KNN_LIB_DIR}"
+          find "${PRIME_KNN_LIB_DIR}" -type d -exec chmod 755 {} \;
+          find "${PRIME_KNN_LIB_DIR}" -type f -name '*.so*' -exec chmod 755 {} \;
 
           # Symlink the k-NN libraries into a trusted system path (/usr/lib).
-          # This bypasses the LD_LIBRARY_PATH stripping that occurs when 
+          # This bypasses the LD_LIBRARY_PATH stripping that occurs when
           # OpenSearch runs with elevated memory lock capabilities.
           mkdir -p "${CRAFT_PRIME}/usr/lib"
-          for file in "${prime_knn_lib_dir}"/*.so*; do
+          for FILE in "${PRIME_KNN_LIB_DIR}"/*.so*; do
               # We use basename to ensure the symlink points to the correct runtime path
-              ln -sf "${knn_lib_dir}/$(basename "${file}")" "${CRAFT_PRIME}/usr/lib/"
+              ln -sf "${KNN_LIB_DIR}/$(basename "${FILE}")" "${CRAFT_PRIME}/usr/lib/"
           done
       fi
 
-      if [ ! -f "${prime_dest}" ]; then
-          src=""
+      if [ ! -f "${PRIME_DEST}" ]; then
+          SRC=""
           if [ -f "/etc/ssl/certs/java/cacerts" ]; then
-              src="/etc/ssl/certs/java/cacerts"
+              SRC="/etc/ssl/certs/java/cacerts"
           elif [ -f "/usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts" ]; then
-              src="/usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts"
+              SRC="/usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts"
           fi
 
-          keytool=""
+          KEYTOOL=""
           if [ -x "/usr/lib/jvm/java-21-openjdk-amd64/bin/keytool" ]; then
-              keytool="/usr/lib/jvm/java-21-openjdk-amd64/bin/keytool"
+              KEYTOOL="/usr/lib/jvm/java-21-openjdk-amd64/bin/keytool"
           elif command -v keytool >/dev/null 2>&1; then
-              keytool="$(command -v keytool)"
+              KEYTOOL="$(command -v keytool)"
           fi
 
-          if [ -n "${src}" ] && [ -n "${keytool}" ]; then
-              "${keytool}" \
+          if [ -n "${SRC}" ] && [ -n "${KEYTOOL}" ]; then
+              "${KEYTOOL}" \
                   -importkeystore \
-                  -srckeystore "${src}" \
-                  -destkeystore "${prime_dest}" \
+                  -srckeystore "${SRC}" \
+                  -destkeystore "${PRIME_DEST}" \
                   -srcstoretype JKS \
                   -deststoretype PKCS12 \
                   -srcstorepass changeit \
                   -deststorepass changeit \
                   -noprompt
 
-              chmod 660 "${prime_dest}"
-              
+              chmod 660 "${PRIME_DEST}"
+
           else
               echo "Skipping cacerts.p12 generation: missing source cacerts or keytool" >&2
           fi
       fi
 
-      if [ -f "${jvm_opts}" ]; then
-          # ${dest} is the container-side path, this is what the JVM sees at runtime
-          grep -q "javax.net.ssl.trustStore=.*cacerts.p12" "${jvm_opts}" \
-              || echo "-Djavax.net.ssl.trustStore=${dest}" >> "${jvm_opts}"
-          grep -q "javax.net.ssl.trustStorePassword=changeit" "${jvm_opts}" \
-              || echo "-Djavax.net.ssl.trustStorePassword=changeit" >> "${jvm_opts}"
-          grep -q "java.library.path=.*opensearch-knn/lib" "${jvm_opts}" \
-              || echo "-Djava.library.path=${java_library_path}" >> "${jvm_opts}"
+      if [ -f "${JVM_OPTS}" ]; then
+          # ${CONTAINER_CERT_DEST} is the container-side path, this is what the JVM sees at runtime
+          grep -q "javax.net.ssl.trustStore=.*cacerts.p12" "${JVM_OPTS}" \
+              || echo "-Djavax.net.ssl.trustStore=${CONTAINER_CERT_DEST}" >> "${JVM_OPTS}"
+          grep -q "javax.net.ssl.trustStorePassword=changeit" "${JVM_OPTS}" \
+              || echo "-Djavax.net.ssl.trustStorePassword=changeit" >> "${JVM_OPTS}"
+          grep -q "java.library.path=.*opensearch-knn/lib" "${JVM_OPTS}" \
+              || echo "-Djava.library.path=${JAVA_LIBRARY_PATH}" >> "${JVM_OPTS}"
       fi
       # Set ownership for the configuration directory
-      chown -R 584792:584792 "${prime_conf_dir}"
+      chown -R 584792:584792 "${PRIME_CONF_DIR}"
 
   entry:
     plugin: dump
