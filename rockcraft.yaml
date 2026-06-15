@@ -71,12 +71,6 @@ parts:
       mv "${CRAFT_PRIME}/usr/share/opensearch/bin/opensearch-plugin.orig" "${CRAFT_PRIME}/usr/share/opensearch/bin/opensearch-plugin"
       mv "${CRAFT_PRIME}/usr/share/opensearch/bin/opensearch-keystore.orig" "${CRAFT_PRIME}/usr/share/opensearch/bin/opensearch-keystore"
 
-      knn_lib_dir="${CRAFT_PRIME}/usr/share/opensearch/plugins/opensearch-knn/lib"
-      knn_avx2_lib="${knn_lib_dir}/libopensearchknn_faiss_avx2.so"
-      if [ ! -f "${knn_avx2_lib}" ]; then
-          echo "Missing OpenSearch k-NN native library: ${knn_avx2_lib}" >&2
-          exit 1
-      fi
 
       ## for deb packages
       dpkg-query -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W > ${rocks}/dpkg.query
@@ -122,20 +116,17 @@ parts:
       PRIME_KNN_LIB_DIR="${CRAFT_PRIME}${KNN_LIB_DIR}"
       JAVA_LIBRARY_PATH="${KNN_LIB_DIR}:/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib"
 
-      if [ -d "${PRIME_KNN_LIB_DIR}" ]; then
-          chown -R 584792:584792 "${PRIME_KNN_LIB_DIR}"
-          find "${PRIME_KNN_LIB_DIR}" -type d -exec chmod 755 {} \;
-          find "${PRIME_KNN_LIB_DIR}" -type f -name '*.so*' -exec chmod 755 {} \;
+      chown -R 584792:584792 "${PRIME_KNN_LIB_DIR}"
+      find "${PRIME_KNN_LIB_DIR}" -type d -exec chmod 755 {} \;
+      find "${PRIME_KNN_LIB_DIR}" -type f -name '*.so*' -exec chmod 755 {} \;
 
-          # Symlink the k-NN libraries into a trusted system path (/usr/lib).
-          # This bypasses the LD_LIBRARY_PATH stripping that occurs when
-          # OpenSearch runs with elevated memory lock capabilities.
-          mkdir -p "${CRAFT_PRIME}/usr/lib"
-          for FILE in "${PRIME_KNN_LIB_DIR}"/*.so*; do
-              # We use basename to ensure the symlink points to the correct runtime path
-              ln -sf "${KNN_LIB_DIR}/$(basename "${FILE}")" "${CRAFT_PRIME}/usr/lib/"
-          done
-      fi
+      # Symlink the k-NN libraries into a trusted system path (/usr/lib).
+      # This bypasses the LD_LIBRARY_PATH stripping that occurs when
+      # OpenSearch runs with elevated memory lock capabilities.
+      mkdir -p "${CRAFT_PRIME}/usr/lib"
+      for FILE in "${PRIME_KNN_LIB_DIR}"/*.so*; do
+          ln -sf "${KNN_LIB_DIR}/$(basename "${FILE}")" "${CRAFT_PRIME}/usr/lib/"
+      done
 
       if [ ! -f "${PRIME_DEST}" ]; then
           SRC=""
