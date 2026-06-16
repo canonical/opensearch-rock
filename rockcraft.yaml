@@ -161,15 +161,12 @@ parts:
           fi
       fi
 
-      if [ -f "${JVM_OPTS}" ]; then
-          # ${CONTAINER_CERT_DEST} is the container-side path, this is what the JVM sees at runtime
-          grep -q "javax.net.ssl.trustStore=.*cacerts.p12" "${JVM_OPTS}" \
-              || echo "-Djavax.net.ssl.trustStore=${CONTAINER_CERT_DEST}" >> "${JVM_OPTS}"
-          grep -q "javax.net.ssl.trustStorePassword=changeit" "${JVM_OPTS}" \
-              || echo "-Djavax.net.ssl.trustStorePassword=changeit" >> "${JVM_OPTS}"
-          grep -q "java.library.path=.*opensearch-knn/lib" "${JVM_OPTS}" \
-              || echo "-Djava.library.path=${JAVA_LIBRARY_PATH}" >> "${JVM_OPTS}"
-      fi
+      grep -q "javax.net.ssl.trustStore=.*cacerts.p12" "${JVM_OPTS}" \
+          || echo "-Djavax.net.ssl.trustStore=${CONTAINER_CERT_DEST}" >> "${JVM_OPTS}"
+      grep -q "javax.net.ssl.trustStorePassword=changeit" "${JVM_OPTS}" \
+          || echo "-Djavax.net.ssl.trustStorePassword=changeit" >> "${JVM_OPTS}"
+      grep -q "java.library.path=.*opensearch-knn/lib" "${JVM_OPTS}" \
+          || echo "-Djava.library.path=${JAVA_LIBRARY_PATH}" >> "${JVM_OPTS}"
       # Set ownership for the configuration directory
       chown -R 584792:584792 "${PRIME_CONF_DIR}"
 
