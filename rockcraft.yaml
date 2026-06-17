@@ -104,17 +104,8 @@ parts:
           "${CRAFT_PRIME}/var/log/opensearch" \
           "${CRAFT_PRIME}/etc/opensearch/certificates"
 
-      # Ensure certificates directory exists with correct permissions
-      CONTAINER_CONF_DIR="/etc/opensearch"
-      PRIME_CONF_DIR="${CRAFT_PRIME}${CONTAINER_CONF_DIR}"
-      CONTAINER_CERTS_DIR="${CONTAINER_CONF_DIR}/certificates"
-      PRIME_CERTS_DIR="${PRIME_CONF_DIR}/certificates"
-      CONTAINER_CERT_DEST="${CONTAINER_CERTS_DIR}/cacerts.p12"
-      PRIME_DEST="${PRIME_CERTS_DIR}/cacerts.p12"
-      JVM_OPTS="${PRIME_CONF_DIR}/jvm.options"
       KNN_LIB_DIR="/usr/share/opensearch/plugins/opensearch-knn/lib"
       PRIME_KNN_LIB_DIR="${CRAFT_PRIME}${KNN_LIB_DIR}"
-      JAVA_LIBRARY_PATH="${KNN_LIB_DIR}:/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib"
 
       chown -R 584792:584792 "${PRIME_KNN_LIB_DIR}"
       find "${PRIME_KNN_LIB_DIR}" -type d -exec chmod 755 {} \;
@@ -128,7 +119,12 @@ parts:
           ln -sf "${KNN_LIB_DIR}/$(basename "${FILE}")" "${CRAFT_PRIME}/usr/lib/"
       done
 
-      if [ ! -f "${PRIME_DEST}" ]; then
+      CONTAINER_CONF_DIR="/etc/opensearch"
+      PRIME_CONF_DIR="${CRAFT_PRIME}${CONTAINER_CONF_DIR}"
+      CONTAINER_CERTS_DIR="${CONTAINER_CONF_DIR}/certificates"
+      CACERTS_DEST="${PRIME_CONF_DIR}/certificates/cacerts.p12"
+
+      if [ ! -f "${CACERTS_DEST}" ]; then
           SRC=""
           if [ -f "/etc/ssl/certs/java/cacerts" ]; then
               SRC="/etc/ssl/certs/java/cacerts"
@@ -147,19 +143,23 @@ parts:
               "${KEYTOOL}" \
                   -importkeystore \
                   -srckeystore "${SRC}" \
-                  -destkeystore "${PRIME_DEST}" \
+                  -destkeystore "${CACERTS_DEST}" \
                   -srcstoretype JKS \
                   -deststoretype PKCS12 \
                   -srcstorepass changeit \
                   -deststorepass changeit \
                   -noprompt
 
-              chmod 660 "${PRIME_DEST}"
+              chmod 660 "${CACERTS_DEST}"
 
           else
               echo "Skipping cacerts.p12 generation: missing source cacerts or keytool" >&2
           fi
       fi
+
+      JVM_OPTS="${PRIME_CONF_DIR}/jvm.options"
+      CONTAINER_CERT_DEST="${CONTAINER_CERTS_DIR}/cacerts.p12"
+      JAVA_LIBRARY_PATH="${KNN_LIB_DIR}:/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib"
 
       grep -q "javax.net.ssl.trustStore=.*cacerts.p12" "${JVM_OPTS}" \
           || echo "-Djavax.net.ssl.trustStore=${CONTAINER_CERT_DEST}" >> "${JVM_OPTS}"
