@@ -123,39 +123,24 @@ parts:
       PRIME_CONF_DIR="${CRAFT_PRIME}${CONTAINER_CONF_DIR}"
       CONTAINER_CERTS_DIR="${CONTAINER_CONF_DIR}/certificates"
       CACERTS_DEST="${PRIME_CONF_DIR}/certificates/cacerts.p12"
+      CACERTS="/usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts"
+      KEYTOOL="/usr/lib/jvm/java-21-openjdk-amd64/bin/keytool"
 
-      if [ ! -f "${CACERTS_DEST}" ]; then
-          SRC=""
-          if [ -f "/etc/ssl/certs/java/cacerts" ]; then
-              SRC="/etc/ssl/certs/java/cacerts"
-          elif [ -f "/usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts" ]; then
-              SRC="/usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts"
-          fi
+      "${KEYTOOL}" \
+          -importkeystore \
+          -srckeystore "${CACERTS}" \
+          -destkeystore "${CACERTS_DEST}" \
+          -srcstoretype JKS \
+          -deststoretype PKCS12 \
+          -srcstorepass changeit \
+          -deststorepass changeit \
+          -noprompt
 
-          KEYTOOL=""
-          if [ -x "/usr/lib/jvm/java-21-openjdk-amd64/bin/keytool" ]; then
-              KEYTOOL="/usr/lib/jvm/java-21-openjdk-amd64/bin/keytool"
-          elif command -v keytool >/dev/null 2>&1; then
-              KEYTOOL="$(command -v keytool)"
-          fi
+      chmod 660 "${CACERTS_DEST}"
 
-          if [ -n "${SRC}" ] && [ -n "${KEYTOOL}" ]; then
-              "${KEYTOOL}" \
-                  -importkeystore \
-                  -srckeystore "${SRC}" \
-                  -destkeystore "${CACERTS_DEST}" \
-                  -srcstoretype JKS \
-                  -deststoretype PKCS12 \
-                  -srcstorepass changeit \
-                  -deststorepass changeit \
-                  -noprompt
 
-              chmod 660 "${CACERTS_DEST}"
-
-          else
-              echo "Skipping cacerts.p12 generation: missing source cacerts or keytool" >&2
-          fi
-      fi
+      #########
+      # Copy JDK cacerts
 
       JVM_OPTS="${PRIME_CONF_DIR}/jvm.options"
       CONTAINER_CERT_DEST="${CONTAINER_CERTS_DIR}/cacerts.p12"
