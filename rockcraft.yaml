@@ -123,10 +123,11 @@ parts:
       CONTAINER_CONF_DIR="/etc/opensearch"
       PRIME_CONF_DIR="${CRAFT_PRIME}${CONTAINER_CONF_DIR}"
       CACERTS_DEST="${PRIME_CONF_DIR}/certificates/cacerts.p12"
+      PRIME_JAVA_HOME="${CRAFT_PRIME}/usr/lib/jvm/java-21-openjdk-amd64"
 
-      /usr/lib/jvm/java-21-openjdk-amd64/bin/keytool \
+      "${PRIME_JAVA_HOME}/bin/keytool" \
           -importkeystore \
-          -srckeystore /usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts \
+          -srckeystore "${PRIME_JAVA_HOME}/lib/security/cacerts" \
           -destkeystore "${CACERTS_DEST}" \
           -srcstoretype JKS \
           -deststoretype PKCS12 \
