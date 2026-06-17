@@ -85,14 +85,14 @@ parts:
     override-prime: |
       craftctl default
 
-      # Ensure _daemon_ user exists with UID/GID 584792 for Pebble service
-      # Pebble's user field requires a username in /etc/passwd, not just a numeric UID.
+      # --- Daemon user ---
+      # Pebble's run_user requires a named user in /etc/passwd, not just a UID.
       if ! id -u _daemon_ >/dev/null 2>&1; then
         groupadd -g 584792 _daemon_ || true
         useradd -u 584792 -g 584792 -r -s /bin/false _daemon_ || true
       fi
 
-      # Give permission at the required folders
+      # --- Directory permissions ---
       mkdir -p /var/lib/opensearch /usr/share/tmp /var/log/opensearch
       mkdir -p /etc/opensearch/certificates
       install -d -o 584792 -g 584792 -m 770 \
@@ -104,6 +104,7 @@ parts:
           "${CRAFT_PRIME}/var/log/opensearch" \
           "${CRAFT_PRIME}/etc/opensearch/certificates"
 
+      # --- k-NN native libraries ---
       KNN_LIB_DIR="/usr/share/opensearch/plugins/opensearch-knn/lib"
       PRIME_KNN_LIB_DIR="${CRAFT_PRIME}${KNN_LIB_DIR}"
 
@@ -111,24 +112,21 @@ parts:
       find "${PRIME_KNN_LIB_DIR}" -type d -exec chmod 755 {} \;
       find "${PRIME_KNN_LIB_DIR}" -type f -name '*.so*' -exec chmod 755 {} \;
 
-      # Symlink the k-NN libraries into a trusted system path (/usr/lib).
-      # This bypasses the LD_LIBRARY_PATH stripping that occurs when
-      # OpenSearch runs with elevated memory lock capabilities.
+      # Symlink into /usr/lib so the dynamic linker finds them without LD_LIBRARY_PATH,
+      # which is stripped when OpenSearch runs with elevated memory lock capabilities.
       mkdir -p "${CRAFT_PRIME}/usr/lib"
       for FILE in "${PRIME_KNN_LIB_DIR}"/*.so*; do
           ln -sf "${KNN_LIB_DIR}/$(basename "${FILE}")" "${CRAFT_PRIME}/usr/lib/"
       done
 
+      # --- CA truststore ---
       CONTAINER_CONF_DIR="/etc/opensearch"
       PRIME_CONF_DIR="${CRAFT_PRIME}${CONTAINER_CONF_DIR}"
-      CONTAINER_CERTS_DIR="${CONTAINER_CONF_DIR}/certificates"
       CACERTS_DEST="${PRIME_CONF_DIR}/certificates/cacerts.p12"
-      CACERTS="/usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts"
-      KEYTOOL="/usr/lib/jvm/java-21-openjdk-amd64/bin/keytool"
 
-      "${KEYTOOL}" \
+      /usr/lib/jvm/java-21-openjdk-amd64/bin/keytool \
           -importkeystore \
-          -srckeystore "${CACERTS}" \
+          -srckeystore /usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts \
           -destkeystore "${CACERTS_DEST}" \
           -srcstoretype JKS \
           -deststoretype PKCS12 \
@@ -138,21 +136,13 @@ parts:
 
       chmod 660 "${CACERTS_DEST}"
 
-
-      #########
-      # Copy JDK cacerts
-
+      # --- JVM options ---
       JVM_OPTS="${PRIME_CONF_DIR}/jvm.options"
-      CONTAINER_CERT_DEST="${CONTAINER_CERTS_DIR}/cacerts.p12"
       JAVA_LIBRARY_PATH="${KNN_LIB_DIR}:/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib"
 
-      grep -q "javax.net.ssl.trustStore=.*cacerts.p12" "${JVM_OPTS}" \
-          || echo "-Djavax.net.ssl.trustStore=${CONTAINER_CERT_DEST}" >> "${JVM_OPTS}"
-      grep -q "javax.net.ssl.trustStorePassword=changeit" "${JVM_OPTS}" \
-          || echo "-Djavax.net.ssl.trustStorePassword=changeit" >> "${JVM_OPTS}"
-      grep -q "java.library.path=.*opensearch-knn/lib" "${JVM_OPTS}" \
-          || echo "-Djava.library.path=${JAVA_LIBRARY_PATH}" >> "${JVM_OPTS}"
-      # Set ownership for the configuration directory
+      echo "-Djavax.net.ssl.trustStore=${CONTAINER_CONF_DIR}/certificates/cacerts.p12" >> "${JVM_OPTS}"
+      echo "-Djavax.net.ssl.trustStorePassword=changeit" >> "${JVM_OPTS}"
+      echo "-Djava.library.path=${JAVA_LIBRARY_PATH}" >> "${JVM_OPTS}"
       chown -R 584792:584792 "${PRIME_CONF_DIR}"
 
   entry:
