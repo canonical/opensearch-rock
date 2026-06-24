@@ -10,6 +10,10 @@ on:
   workflow_call:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   ci-tests:
     name: Build and Run Tests
@@ -33,7 +37,7 @@ jobs:
           sudo addgroup --system docker
           sudo adduser $USER docker
           newgrp docker
-  
+
           # yq
           sudo snap install yq
 
@@ -53,10 +57,10 @@ jobs:
       - name: Publish rock to Store
         run: |
           version="$(cat rockcraft.yaml | yq .version)"
-          
+
           base="$(cat rockcraft.yaml | yq .base)"
           base="${base#*@}"
-          
+
           # push major version to edge
           major_tag_version="${version%%.*}-${{ env.RELEASE }}"
           rockcraft.skopeo \
@@ -65,7 +69,7 @@ jobs:
               oci-archive:opensearch_${version}_amd64.rock \
               docker-daemon:ghcr.io/canonical/opensearch:${major_tag_version}
           docker push ghcr.io/canonical/opensearch:${major_tag_version}
-          
+
           ### push full version to edge
           tag_version="${version}-${base}_${{ env.RELEASE }}"
           echo "Publishing opensearch:${tag_version}"
