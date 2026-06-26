@@ -55,6 +55,7 @@ parts:
       - python3-venv
       - python3-yaml
       - curl
+      - lsof
       - util-linux
     override-prime: |
       craftctl default
